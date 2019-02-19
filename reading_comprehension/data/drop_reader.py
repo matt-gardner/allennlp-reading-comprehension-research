@@ -79,10 +79,10 @@ class DropReader(DatasetReader):
         self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         self.passage_length_limit = passage_length_limit
         self.question_length_limit = question_length_limit
-        for item in skip_when_all_empty:
+        self.skip_when_all_empty = skip_when_all_empty if skip_when_all_empty is not None else []
+        for item in self.skip_when_all_empty:
             assert item in ["passage_span", "question_span", "addition_subtraction", "counting"], \
                 f"Unsupported skip type: {item}"
-        self.skip_when_all_empty = skip_when_all_empty if skip_when_all_empty is not None else []
         self.instance_format = instance_format
         self.relaxed_span_match_for_finding_labels = relaxed_span_match_for_finding_labels
 

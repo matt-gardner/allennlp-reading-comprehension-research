@@ -430,35 +430,50 @@ class AugmentedQANet(Model):
                 else:
                     predicted_ability_str = self.answering_abilities[0]
 
+                answer_json = {}
+
                 # We did not consider multi-mention answers here
                 if predicted_ability_str == "passage_span_extraction":
+                    answer_json["answer_type"] = "passage_span"
                     passage_str = metadata[i]['original_passage']
                     offsets = metadata[i]['passage_token_offsets']
                     predicted_span = tuple(best_passage_span[i].detach().cpu().numpy())
                     start_offset = offsets[predicted_span[0]][0]
                     end_offset = offsets[predicted_span[1]][1]
                     predicted_answer = passage_str[start_offset:end_offset]
+                    answer_json["string"] = predicted_answer
+                    answer_json["spans"] = [(start_offset, end_offset)]
                 elif predicted_ability_str == "question_span_extraction":
+                    answer_json["answer_type"] = "question_span"
                     question_str = metadata[i]['original_question']
                     offsets = metadata[i]['question_token_offsets']
                     predicted_span = tuple(best_question_span[i].detach().cpu().numpy())
                     start_offset = offsets[predicted_span[0]][0]
                     end_offset = offsets[predicted_span[1]][1]
                     predicted_answer = question_str[start_offset:end_offset]
+                    answer_json["string"] = predicted_answer
+                    answer_json["spans"] = [(start_offset, end_offset)]
                 elif predicted_ability_str == "addition_subtraction":  # plus_minus combination answer
+                    answer_json["answer_type"] = "arithmetic"
                     original_numbers = metadata[i]['original_numbers']
                     sign_remap = {0: 0, 1: 1, 2: -1}
                     predicted_signs = [sign_remap[it] for it in best_signs_for_numbers[i].detach().cpu().numpy()]
                     result = sum([sign * number for sign, number in zip(predicted_signs, original_numbers)])
                     predicted_answer = str(result)
+                    answer_json["number_positions"] = metadata[i]['number_indices']
+                    answer_json["number_values"] = original_numbers
+                    answer_json["number_signs"] = predicted_signs
+                    answer_json["value"] = result
                 elif predicted_ability_str == "counting":
+                    answer_json["answer_type"] = "count"
                     predicted_count = best_count_number[i].detach().cpu().numpy()
                     predicted_answer = str(predicted_count)
+                    answer_json["count"] = predicted_count
                 else:
                     raise ValueError(f"Unsupported answer ability: {predicted_ability_str}")
 
                 output_dict["question_id"].append(metadata[i]["question_id"])
-                output_dict["answer"].append(predicted_answer)
+                output_dict["answer"].append(answer_json)
                 answer_annotations = metadata[i].get('answer_annotations', [])
                 if answer_annotations:
                     self._drop_metrics(predicted_answer, answer_annotations)
@@ -466,8 +481,6 @@ class AugmentedQANet(Model):
             output_dict["passage_question_attention"] = passage_question_attention
             output_dict["question_tokens"] = question_tokens
             output_dict["passage_tokens"] = passage_tokens
-            # The demo takes `best_span_str` as a key to find the predicted answer
-            output_dict["best_span_str"] = output_dict["answer"]
         return output_dict
 
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
