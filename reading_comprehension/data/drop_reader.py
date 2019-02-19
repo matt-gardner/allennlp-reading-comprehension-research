@@ -29,7 +29,7 @@ WORD_NUMBER_MAP = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
 
 
 @DatasetReader.register("drop")
-class DROPReader(DatasetReader):
+class DropReader(DatasetReader):
     def __init__(self,
                  tokenizer: Tokenizer = None,
                  token_indexers: Dict[str, TokenIndexer] = None,

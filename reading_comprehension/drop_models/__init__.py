@@ -1,0 +1,4 @@
+from reading_comprehension.drop_models.augmented_qanet import AugmentedQANet
+from reading_comprehension.drop_models.bert_rc_marginal import BertRcMarginal
+from reading_comprehension.drop_models.bidaf_marginal import BiDAFMarginal
+from reading_comprehension.drop_models.passage_only import PassageOnlyRcModel
